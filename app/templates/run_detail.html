@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Run #{{ run.id }} - Red Teaming Platform{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Run #{{ run.id }} - Details</h2>
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-value">{{ run.model_name }}</div>
+            <div class="stat-label">Model</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ run.total_prompts }}</div>
+            <div class="stat-label">Total Prompts</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">
+                {% if run.unsafe_count > 0 %}
+                    <span style="color: #e74c3c;">{{ run.unsafe_count }}</span>
+                {% else %}
+                    <span style="color: #27ae60;">{{ run.unsafe_count }}</span>
+                {% endif %}
+            </div>
+            <div class="stat-label">Unsafe Responses</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">
+                {% if run.score > 0 %}
+                    <span style="color: #e74c3c;">{{ "%.1f"|format(run.score) }}%</span>
+                {% else %}
+                    <span style="color: #27ae60;">{{ "%.1f"|format(run.score) }}%</span>
+                {% endif %}
+            </div>
+            <div class="stat-label">Unsafe Percentage</div>
+        </div>
+    </div>
+    <p style="margin-top: 10px; color: #7f8c8d;">
+        <strong>Created:</strong> {{ run.created_at.strftime('%Y-%m-%d %H:%M:%S') }}<br>
+        <strong>Attack Set:</strong> {{ run.attack_set_name }}
+    </p>
+    <div style="margin-top: 15px;">
+        <a href="/" class="btn btn-secondary">← Back to Runs</a>
+        <a href="/runs/{{ run.id }}/export?format=csv" class="btn" style="margin-left: 10px;">Export CSV</a>
+        <a href="/runs/{{ run.id }}/export?format=json" class="btn" style="margin-left: 10px;">Export JSON</a>
+    </div>
+</div>
+
+{% if prompts %}
+    <div class="card">
+        <h3>Prompt Results ({{ prompts|length }} total)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Attack ID</th>
+                    <th>Type</th>
+                    <th>Prompt</th>
+                    <th>Output (truncated)</th>
+                    <th>Safety</th>
+                    <th>Confidence</th>
+                    <th>Refused</th>
+                    <th>Categories</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prompt in prompts %}
+                <tr>
+                    <td><code>{{ prompt.attack_id }}</code></td>
+                    <td>
+                        <span class="badge" style="background-color: #95a5a6;">
+                            {{ prompt.attack_type }}
+                        </span>
+                    </td>
+                    <td class="text-truncate" title="{{ prompt.prompt_text }}">
+                        {{ prompt.prompt_text[:100] }}{% if prompt.prompt_text|length > 100 %}...{% endif %}
+                    </td>
+                    <td class="text-truncate" title="{{ prompt.response_obj.model_output if prompt.response_obj else 'No response' }}">
+                        {% if prompt.response_obj %}
+                            {{ prompt.response_obj.model_output[:100] }}{% if prompt.response_obj.model_output|length > 100 %}...{% endif %}
+                        {% else %}
+                            <em style="color: #95a5a6;">No response</em>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if prompt.response_obj %}
+                            {% if prompt.response_obj.is_unsafe %}
+                                <span class="badge badge-unsafe">Unsafe</span>
+                            {% else %}
+                                <span class="badge badge-safe">Safe</span>
+                            {% endif %}
+                        {% else %}
+                            <span style="color: #95a5a6;">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if prompt.response_obj %}
+                            {{ "%.2f"|format(prompt.response_obj.confidence_score) }}
+                        {% else %}
+                            <span style="color: #95a5a6;">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if prompt.response_obj and prompt.response_obj.refused %}
+                            <span class="badge badge-refused">Yes</span>
+                        {% elif prompt.response_obj %}
+                            <span style="color: #95a5a6;">No</span>
+                        {% else %}
+                            <span style="color: #95a5a6;">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if prompt.response_obj and prompt.response_obj.categories %}
+                            {% for category in prompt.response_obj.categories %}
+                                <span class="badge" style="background-color: #e67e22; margin-right: 3px;">
+                                    {{ category }}
+                                </span>
+                            {% endfor %}
+                        {% else %}
+                            <span style="color: #95a5a6;">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="card">
+        <p style="color: #7f8c8d; text-align: center; padding: 40px;">
+            No prompts found for this run.
+        </p>
+    </div>
+{% endif %}
+{% endblock %}
+

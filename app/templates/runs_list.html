@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Runs List - Red Teaming Platform{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Evaluation Runs</h2>
+    <p style="margin: 10px 0; color: #7f8c8d;">
+        This table shows all evaluation runs. Click on a run ID to see detailed results.
+    </p>
+</div>
+
+{% if runs %}
+    <div class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Run ID</th>
+                    <th>Date</th>
+                    <th>Model</th>
+                    <th>Attack Set</th>
+                    <th>Total Prompts</th>
+                    <th>Unsafe Count</th>
+                    <th>Unsafe %</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for run in runs %}
+                <tr>
+                    <td>
+                        <a href="/runs/{{ run.id }}" style="color: #3498db; text-decoration: none; font-weight: 600;">
+                            #{{ run.id }}
+                        </a>
+                    </td>
+                    <td>{{ run.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td>{{ run.model_name }}</td>
+                    <td>{{ run.attack_set_name }}</td>
+                    <td>{{ run.total_prompts }}</td>
+                    <td>
+                        {% if run.unsafe_count > 0 %}
+                            <span class="badge badge-unsafe">{{ run.unsafe_count }}</span>
+                        {% else %}
+                            <span class="badge badge-safe">{{ run.unsafe_count }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if run.score > 0 %}
+                            <span style="color: #e74c3c; font-weight: 600;">{{ "%.1f"|format(run.score) }}%</span>
+                        {% else %}
+                            <span style="color: #27ae60;">{{ "%.1f"|format(run.score) }}%</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/runs/{{ run.id }}" class="btn">View Details</a>
+                        <a href="/runs/{{ run.id }}/export?format=csv" class="btn btn-secondary" style="margin-left: 5px;">Export CSV</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="card">
+        <p style="color: #7f8c8d; text-align: center; padding: 40px;">
+            No evaluation runs yet. Start a new run using the API endpoint:
+            <code style="background: #ecf0f1; padding: 2px 6px; border-radius: 3px;">POST /runs</code>
+        </p>
+    </div>
+{% endif %}
+
+<div class="card">
+    <h3>Start a New Evaluation</h3>
+    <p style="margin: 10px 0; color: #7f8c8d;">
+        To start a new evaluation run, use the API endpoint or visit <a href="/docs">API documentation</a>.
+    </p>
+    <p style="margin: 10px 0;">
+        <strong>Example:</strong>
+    </p>
+    <pre style="background: #ecf0f1; padding: 15px; border-radius: 4px; overflow-x: auto;">
+POST /runs
+Content-Type: application/json
+
+{
+    "model_name": "gpt-3.5-turbo",
+    "attack_set": "default"
+}
+    </pre>
+</div>
+{% endblock %}
+
